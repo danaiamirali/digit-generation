@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 import struct
 from array import array
 from os.path  import join
@@ -54,7 +55,7 @@ class MnistDataloader(object):
     def load_data(self):
         x_train, y_train = self._read_images_labels(self.training_images_filepath, self.training_labels_filepath)
         x_test, y_test = self._read_images_labels(self.test_images_filepath, self.test_labels_filepath)
-        return (x_train, y_train),(x_test, y_test)
+        return (torch.tensor(x_train), torch.tensor(y_train)),(torch.tensor(x_test), torch.tensor(y_test))
 
     def view(self, x_train, y_train, x_test, y_test):
         images = []
