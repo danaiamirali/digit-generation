@@ -17,15 +17,15 @@ if __name__ == "__main__":
     input_dim = img_dim_x * img_dim_y
 
     # Hyperparameters
-    hidden_dim = 1000
-    latent_dim = 100
+    hidden_dim = 700
+    latent_dim = 150
 
     vae = VAE(input_dim, hidden_dim, latent_dim)
 
     optimizer = Adam(vae.parameters(), lr=1e-3)
     # Train the VAE model
-    train_vae(vae, x_train, optimizer=optimizer, num_epochs=10)
+    train_vae(vae, x_train, optimizer=optimizer, num_epochs=10, bce_weight=1, kld_weight=0.5)
 
     # Generate samples from the VAE model
     vae.eval()
-    samples = vae.generate_samples(10, latent_dim, output_path="samples")
+    samples = vae.generate_samples(10, latent_dim, output_path="img/generated-samples/")

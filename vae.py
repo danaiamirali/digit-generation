@@ -3,14 +3,14 @@ import torch.nn as nn
 import matplotlib.pyplot as plt
 import os
 
-def loss_function(recon_x, x, mu, logvar):
+def loss_function(recon_x, x, mu, logvar, bce_weight=1.0, kld_weight=0.1):
     """Loss function for VAE"""
     # Reconstruction loss
     BCE = nn.functional.binary_cross_entropy(recon_x, x, reduction='sum')
     # KL Divergence loss
     KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
     # VAE Loss = BCE + KLD
-    return BCE + KLD
+    return bce_weight * BCE + kld_weight * KLD
 
 class Encoder(nn.Module):
     """
@@ -25,14 +25,18 @@ class Encoder(nn.Module):
         super(Encoder, self).__init__()
         self.fc1 = nn.Linear(input_dim, hidden_dim)
         self.fc2 = nn.Linear(hidden_dim, hidden_dim)
-        self.fc31 = nn.Linear(hidden_dim, latent_dim)
-        self.fc32 = nn.Linear(hidden_dim, latent_dim)
+        self.fc3 = nn.Linear(hidden_dim, hidden_dim)
+        self.fc4 = nn.Linear(hidden_dim, hidden_dim)
+        self.fc41 = nn.Linear(hidden_dim, latent_dim)
+        self.fc42 = nn.Linear(hidden_dim, latent_dim)
 
     def forward(self, x):
         x = torch.relu(self.fc1(x))
         x = torch.relu(self.fc2(x))
-        mu = self.fc31(x)
-        logvar = self.fc32(x)
+        x = torch.relu(self.fc3(x))
+        x = torch.relu(self.fc4(x))
+        mu = self.fc41(x)
+        logvar = self.fc42(x)
         return mu, logvar
 
 
@@ -48,11 +52,15 @@ class Decoder(nn.Module):
         # define the decoder
         super(Decoder, self).__init__()
         self.fc3 = nn.Linear(latent_dim, hidden_dim)
-        self.fc4 = nn.Linear(hidden_dim, input_dim)
+        self.fc4 = nn.Linear(hidden_dim, hidden_dim)
+        self.fc5 = nn.Linear(hidden_dim, hidden_dim)
+        self.fc6 = nn.Linear(hidden_dim, input_dim)
 
     def forward(self, x):
         x = torch.relu(self.fc3(x))
-        return torch.sigmoid(self.fc4(x))
+        x = torch.relu(self.fc4(x))
+        x = torch.relu(self.fc5(x))
+        return torch.sigmoid(self.fc6(x))
 
 class VAE(nn.Module):
     """VAE model"""
@@ -95,7 +103,7 @@ class VAE(nn.Module):
             plt.savefig(os.path.join(output_path, f'sample_{i}.png'))
             plt.close()
 
-def train_vae(vae, train_loader, optimizer, num_epochs):
+def train_vae(vae, train_loader, optimizer, num_epochs, bce_weight=1.0, kld_weight=0.1):
     """Train the VAE"""
     vae.train()
     vae.to("cuda")
@@ -104,11 +112,11 @@ def train_vae(vae, train_loader, optimizer, num_epochs):
             x = x.to("cuda").flatten().float() / 255
             optimizer.zero_grad()
             recon_x, mu, logvar = vae(x)
-            loss = loss_function(recon_x, x, mu, logvar)
+            loss = loss_function(recon_x, x, mu, logvar, bce_weight, kld_weight)
             loss.backward()
             optimizer.step()
 
-            if i % 1000 == 0:
+            if i % 5000 == 0:
                 print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}'.format(epoch, num_epochs, i, len(train_loader), loss.item()))
 
     print('Finished Training')
