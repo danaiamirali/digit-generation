@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
-import torchvision.datasets as datasets
+import matplotlib.pyplot as plt
+import os
 
 def loss_function(recon_x, x, mu, logvar):
     """Loss function for VAE"""
@@ -62,8 +63,8 @@ class VAE(nn.Module):
 
     def reparameterize(self, mu, logvar):
         """Reparameterize the latent space"""
-        std = torch.exp(0.5*logvar)
-        eps = torch.randn_like(std)
+        std = torch.exp(0.5*logvar).to("cuda")
+        eps = torch.randn_like(std).to("cuda")
         return mu + eps*std
 
     def forward(self, x):
@@ -74,21 +75,33 @@ class VAE(nn.Module):
         # decode the latent space
         return self.decoder(z), mu, logvar
 
-    def generate_samples(self, num_samples, output_path):
+    def generate_samples(self, num_samples, hidden_layers, output_path):
         """Generate samples from the VAE model"""
         with torch.no_grad():
-            z = torch.randn(num_samples, 20)
+            z = torch.randn(num_samples, hidden_layers).to("cuda")
             samples = self.decoder(z).view(num_samples, 28, 28)
-            samples = samples.numpy()
+            samples = samples.cpu().numpy()
             title_texts = ['Sample {}'.format(i) for i in range(num_samples)]
-            self._show_images(samples, title_texts, output_path)
+
+        # Create output directory if it doesn't exist
+        if not os.path.exists(output_path):
+            os.makedirs(output_path)
+        
+        # Save each sample as an image
+        for i, sample in enumerate(samples):
+            plt.imshow(sample, cmap='gray')
+            plt.title(title_texts[i])
+            plt.axis('off')
+            plt.savefig(os.path.join(output_path, f'sample_{i}.png'))
+            plt.close()
 
 def train_vae(vae, train_loader, optimizer, num_epochs):
     """Train the VAE"""
     vae.train()
+    vae.to("cuda")
     for epoch in range(num_epochs):
         for i, x in enumerate(train_loader):
-            x = x.flatten().float() / 255
+            x = x.to("cuda").flatten().float() / 255
             optimizer.zero_grad()
             recon_x, mu, logvar = vae(x)
             loss = loss_function(recon_x, x, mu, logvar)

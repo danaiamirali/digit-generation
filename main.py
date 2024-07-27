@@ -17,8 +17,8 @@ if __name__ == "__main__":
     input_dim = img_dim_x * img_dim_y
 
     # Hyperparameters
-    hidden_dim = 400
-    latent_dim = 20
+    hidden_dim = 1000
+    latent_dim = 100
 
     vae = VAE(input_dim, hidden_dim, latent_dim)
 
@@ -28,4 +28,4 @@ if __name__ == "__main__":
 
     # Generate samples from the VAE model
     vae.eval()
-    samples = vae.generate_samples(10, output_path="samples.png")
+    samples = vae.generate_samples(10, latent_dim, output_path="samples")
