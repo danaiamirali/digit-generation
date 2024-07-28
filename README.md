@@ -20,15 +20,7 @@ While autoencoders are incredibly useful, we cannot use them to generate data, s
 
 To achieve the generative capabilities of the VAE, we introduce a latent loss alongside the reconstruction loss, and model the generative task as one where we are sampling from a mixture of Gaussian models. For instance, in the case of the MNIST dataset, we can imagine the latent layer as being a mixture of 10 Gaussian distributions, each corresponding to one of the 10 digits we can generate. Generating a digit, then, becomes a case of randomly sampling from this distribution.
 
-## Training a VAE
 
-
-
-## Evaluating VAE Data impact on MNIST Classifier
-
-...
-
-
-## References
+## Resources
 1. Towards Data Science - Understanding Variational Autoencoders [[Link](https://towardsdatascience.com/understanding-variational-autoencoders-vaes-f70510919f73)]
 2. CodeEmporium - Variational Autoencoders Explained [[Link](https://youtu.be/fcvYpzHmhvA?si=U3xpxFgmrZhflG9p)]
